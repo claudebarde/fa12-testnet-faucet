@@ -8,8 +8,8 @@
   import fileIcon from "../../public/images/file-text.svg";
 
   let address = "";
-  let rpc = "http://localhost:8732";
-  const fa12Address = "KT19D4bkZSZLeL7ThHmVDLtZZB8J9czjqX1Q";
+  const rpc = "https://carthagenet.smartpy.io";
+  const fa12Address = "KT1QaxSfGtgn86Lnhtu8PrkApQLiFt2SMEfr";
   let validAddress = false;
   let loading = false;
 
@@ -37,6 +37,7 @@
       console.log(error);
     } finally {
       loading = false;
+      address = "";
     }
   };
 
@@ -62,6 +63,7 @@
       console.log(err);
     } finally {
       loading = false;
+      address = "";
     }
   };
 
@@ -106,7 +108,7 @@
       </a>
       <a
         class="navbar-item"
-        href="https://github.com/claudebarde/fa12-testnet-faucet"
+        href="https://better-call.dev/carthagenet/KT1QaxSfGtgn86Lnhtu8PrkApQLiFt2SMEfr/operations"
         target="_blank"
         rel="noopener noreferrer">
         <span class="icon is-small">
