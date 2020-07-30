@@ -3,6 +3,7 @@
   import { Tezos } from "@taquito/taquito";
   import { TezBridgeWallet } from "@taquito/tezbridge-wallet";
   import { ThanosWallet } from "@thanos-wallet/dapp";
+  import { BeaconWallet } from "@taquito/beacon-wallet";
   import { validateAddress } from "@taquito/utils";
   import gitHubIcon from "../../public/images/github.svg";
   import fileIcon from "../../public/images/file-text.svg";
@@ -12,6 +13,26 @@
   const fa12Address = "KT1QaxSfGtgn86Lnhtu8PrkApQLiFt2SMEfr";
   let validAddress = false;
   let loading = false;
+  let success = false;
+  let balance = undefined;
+
+  $: if (address) {
+    if (validateAddress(address) === 3) {
+      // loads balance for given address
+      Tezos.wallet
+        .at(fa12Address)
+        .then(contract => contract.storage())
+        .then(storage => storage.ledger.get(address))
+        .then(account => {
+          if (account && account.balance) {
+            balance = account.balance.toNumber();
+          } else {
+            balance = 0;
+          }
+        })
+        .catch(err => console.log(err));
+    }
+  }
 
   const isAddressValid = event => {
     const address = event.target.value;
@@ -37,7 +58,30 @@
       console.log(error);
     } finally {
       loading = false;
-      address = "";
+      balance += 100;
+      success = true;
+      setTimeout(() => (success = false), 3000);
+    }
+  };
+
+  const useBeacon = async () => {
+    if (!validAddress) return;
+    loading = true;
+    // if user chooses Beacon
+    const wallet = new BeaconWallet({ name: "FA1.2 Token Faucet" });
+    await wallet.requestPermissions({ network: { type: "carthagenet" } });
+    Tezos.setWalletProvider(wallet);
+    try {
+      const contract = await Tezos.wallet.at(fa12Address);
+      const op = await contract.methods.mint(address).send();
+      await op.confirmation();
+    } catch (error) {
+      console.log(error);
+    } finally {
+      loading = false;
+      balance += 100;
+      success = true;
+      setTimeout(() => (success = false), 3000);
     }
   };
 
@@ -63,7 +107,9 @@
       console.log(err);
     } finally {
       loading = false;
-      address = "";
+      balance += 100;
+      success = true;
+      setTimeout(() => (success = false), 3000);
     }
   };
 
@@ -74,7 +120,7 @@
 
 <style>
   .faucet {
-    width: 40%;
+    width: 60%;
     margin: 0 auto;
   }
 
@@ -85,6 +131,12 @@
   a {
     text-decoration: none;
     color: initial;
+  }
+
+  @media only screen and (max-width: 1024px) {
+    .faucet {
+      width: 95%;
+    }
   }
 </style>
 
@@ -129,7 +181,18 @@
           100 FA1.2 tokens on Tezos Testnet
         </h1>
         <div>
-          <label for="address">Address to send the tokens to:</label>
+          <p>
+            Input the address of your choice to grant it 100 free tokens. The
+            tokens will be added to the ledger present in the token smart
+            contract and will be available for transfer to other accounts in the
+            smart contract.
+          </p>
+        </div>
+      </div>
+      <br />
+      <div class="box faucet">
+        <div>
+          <label for="address">Address to receive the free tokens:</label>
           <div class="control" class:is-loading={loading}>
             <input
               type="text"
@@ -139,18 +202,39 @@
               bind:value={address}
               on:input={isAddressValid} />
           </div>
+          {#if success}
+            <p class="has-text-success has-text-weight-bold">
+              The tokens have been successfully added to this account!
+            </p>
+          {:else if !success}
+            {#if balance && validAddress}
+              <p>Balance: {balance} tokens</p>
+            {:else if balance === 0 && validAddress}
+              <p>No balance</p>
+            {:else}
+              <p class="has-text-white">&nbsp;</p>
+            {/if}
+          {/if}
         </div>
         <br />
-        <div class="columns">
-          <div class="column is-half">
+        <div class="columns has-text-centered">
+          <div class="column is-one-third">
             <button
-              class="button is-link"
+              class="button is-dark"
               on:click={useTezbridge}
               disabled={!validAddress || loading}>
               TezBridge Wallet
             </button>
           </div>
-          <div class="column is-half">
+          <div class="column is-one-third">
+            <button
+              class="button is-info"
+              on:click={useBeacon}
+              disabled={!validAddress || loading}>
+              Beacon Wallet
+            </button>
+          </div>
+          <div class="column is-one-third">
             <button
               class="button is-warning"
               on:click={useThanos}
