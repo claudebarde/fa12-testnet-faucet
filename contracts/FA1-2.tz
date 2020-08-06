@@ -7,7 +7,7 @@ parameter
 storage
   (pair (big_map %ledger
            (address :owner)
-           (pair (nat :balance) (map :allowances (address :spender) (nat :value))))
+           (pair (nat :balance) (map :approvals (address :spender) (nat :value))))
         (nat %totalSupply)) ;
 code {
     UNPAIR ;
@@ -116,7 +116,12 @@ code {
                                                         ## if to address is not in ledger
                                                         ## new key/value pair is created with balance
                                                         DUG 2 ;
-                                                        DIP { PUSH (map address nat) {} ; SWAP ; PAIR ; SOME } ;
+                                                        SWAP ;
+                                                        PUSH (map address nat) {} ;
+                                                        SWAP ;
+                                                        PAIR ;
+                                                        SOME ;
+                                                        SWAP ;
                                                         UPDATE ;
                                                     } ;
                                                 ## updates allowance
@@ -211,8 +216,6 @@ code {
                                             DIG 2 ;
                                             PAIR ;
                                             SOME ;
-                                            SENDER ;
-                                            UPDATE ;
                                         }
                                         {
                                             ## if there is an approved amount
@@ -226,8 +229,6 @@ code {
                                                     DIG 2 ;
                                                     PAIR ;
                                                     SOME ;
-                                                    SENDER ;
-                                                    UPDATE ;
                                                 }
                                                 {
                                                     ## if approved amount is greater than zero
@@ -245,8 +246,6 @@ code {
                                                             DIG 2 ;
                                                             PAIR ;
                                                             SOME ;
-                                                            SENDER ;
-                                                            UPDATE ;
                                                         }
                                                         {
                                                             ## throws error
@@ -254,7 +253,9 @@ code {
                                                             FAILWITH ;
                                                         }
                                                 }
-                                        }
+                                        } ;
+                                        SENDER ;
+                                        UPDATE ;
                                 } ;
                                 PAIR ;
                         }
